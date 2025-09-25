@@ -1,93 +1,105 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
 import joblib
 
 # Load trained model
 model = joblib.load("churn_pipeline.joblib")
 
-# Define mappings (must match your training preprocessing)
-gender_map = {"Female": 0, "Male": 1}
-yesno_map = {"Yes": 1, "No": 0}
-internet_map = {"DSL": 0, "Fiber optic": 1, "No": 2}
-contract_map = {"Month-to-month": 0, "One year": 1, "Two year": 2}
-payment_map = {
-    "Electronic check": 0,
-    "Mailed check": 1,
-    "Bank transfer (automatic)": 2,
-    "Credit card (automatic)": 3
-}
+st.set_page_config(page_title="Customer Churn Predictor", layout="centered")
 
-st.title("Customer Churn Prediction App")
+st.title("📊 Customer Churn Prediction App")
+st.write("Fill in customer details to predict churn probability.")
 
-# Collect user inputs
-gender = st.selectbox("Gender", ["Female", "Male"])
-SeniorCitizen = st.selectbox("Senior Citizen", [0, 1])
-Partner = st.selectbox("Partner", ["Yes", "No"])
-Dependents = st.selectbox("Dependents", ["Yes", "No"])
-tenure = st.number_input("Tenure (months)", min_value=0, max_value=72, value=1)
-PhoneService = st.selectbox("Phone Service", ["Yes", "No"])
-MultipleLines = st.selectbox("Multiple Lines", ["Yes", "No"])
-InternetService = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
-OnlineSecurity = st.selectbox("Online Security", ["Yes", "No"])
-OnlineBackup = st.selectbox("Online Backup", ["Yes", "No"])
-DeviceProtection = st.selectbox("Device Protection", ["Yes", "No"])
-TechSupport = st.selectbox("Tech Support", ["Yes", "No"])
-StreamingTV = st.selectbox("Streaming TV", ["Yes", "No"])
-StreamingMovies = st.selectbox("Streaming Movies", ["Yes", "No"])
-Contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
-PaperlessBilling = st.selectbox("Paperless Billing", ["Yes", "No"])
-PaymentMethod = st.selectbox(
-    "Payment Method",
-    ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"]
-)
-MonthlyCharges = st.number_input("Monthly Charges", min_value=0.0, max_value=200.0, value=50.0)
-TotalCharges = st.number_input("Total Charges", min_value=0.0, max_value=10000.0, value=500.0)
+# Form for customer details
+with st.form("customer_form"):
+    col1, col2, col3 = st.columns(3)
 
-# Create DataFrame
-df = pd.DataFrame({
-    "gender": [gender],
-    "SeniorCitizen": [SeniorCitizen],
-    "Partner": [Partner],
-    "Dependents": [Dependents],
-    "tenure": [tenure],
-    "PhoneService": [PhoneService],
-    "MultipleLines": [MultipleLines],
-    "InternetService": [InternetService],
-    "OnlineSecurity": [OnlineSecurity],
-    "OnlineBackup": [OnlineBackup],
-    "DeviceProtection": [DeviceProtection],
-    "TechSupport": [TechSupport],
-    "StreamingTV": [StreamingTV],
-    "StreamingMovies": [StreamingMovies],
-    "Contract": [Contract],
-    "PaperlessBilling": [PaperlessBilling],
-    "PaymentMethod": [PaymentMethod],
-    "MonthlyCharges": [MonthlyCharges],
-    "TotalCharges": [TotalCharges]
-})
+    with col1:
+        gender = st.selectbox("Gender", ["Female", "Male"])
+        senior_citizen = st.selectbox("Senior Citizen", [0, 1])
+        partner = st.selectbox("Partner", ["Yes", "No"])
+        dependents = st.selectbox("Dependents", ["Yes", "No"])
+        tenure = st.number_input("Tenure (months)", min_value=0, max_value=100, value=12)
 
-# Apply mappings to convert categorical -> numeric
-df["gender"] = df["gender"].map(gender_map)
-df["Partner"] = df["Partner"].map(yesno_map)
-df["Dependents"] = df["Dependents"].map(yesno_map)
-df["PhoneService"] = df["PhoneService"].map(yesno_map)
-df["MultipleLines"] = df["MultipleLines"].map(yesno_map)
-df["OnlineSecurity"] = df["OnlineSecurity"].map(yesno_map)
-df["OnlineBackup"] = df["OnlineBackup"].map(yesno_map)
-df["DeviceProtection"] = df["DeviceProtection"].map(yesno_map)
-df["TechSupport"] = df["TechSupport"].map(yesno_map)
-df["StreamingTV"] = df["StreamingTV"].map(yesno_map)
-df["StreamingMovies"] = df["StreamingMovies"].map(yesno_map)
-df["PaperlessBilling"] = df["PaperlessBilling"].map(yesno_map)
+    with col2:
+        phone_service = st.selectbox("Phone Service", ["Yes", "No"])
+        multiple_lines = st.selectbox("Multiple Lines", ["Yes", "No", "No phone service"])
+        internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+        online_security = st.selectbox("Online Security", ["Yes", "No", "No internet service"])
+        online_backup = st.selectbox("Online Backup", ["Yes", "No", "No internet service"])
 
-df["InternetService"] = df["InternetService"].map(internet_map)
-df["Contract"] = df["Contract"].map(contract_map)
-df["PaymentMethod"] = df["PaymentMethod"].map(payment_map)
+    with col3:
+        device_protection = st.selectbox("Device Protection", ["Yes", "No", "No internet service"])
+        tech_support = st.selectbox("Tech Support", ["Yes", "No", "No internet service"])
+        streaming_tv = st.selectbox("Streaming TV", ["Yes", "No", "No internet service"])
+        streaming_movies = st.selectbox("Streaming Movies", ["Yes", "No", "No internet service"])
+        contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
 
-# Prediction
-if st.button("Predict"):
-    prediction = model.predict(df)[0]
+    paperless_billing = st.selectbox("Paperless Billing", ["Yes", "No"])
+    payment_method = st.selectbox(
+        "Payment Method",
+        ["Electronic check", "Mailed check", "Bank transfer (automatic)", "Credit card (automatic)"]
+    )
+    monthly_charges = st.number_input("Monthly Charges", min_value=0.0, max_value=1000.0, value=50.0)
+    total_charges = st.number_input("Total Charges", min_value=0.0, max_value=10000.0, value=500.0)
+
+    submitted = st.form_submit_button("Predict Churn")
+
+# Handle prediction
+if submitted:
+    # Create input DataFrame
+    input_data = pd.DataFrame([{
+        "gender": gender,
+        "SeniorCitizen": senior_citizen,
+        "Partner": partner,
+        "Dependents": dependents,
+        "tenure": tenure,
+        "PhoneService": phone_service,
+        "MultipleLines": multiple_lines,
+        "InternetService": internet_service,
+        "OnlineSecurity": online_security,
+        "OnlineBackup": online_backup,
+        "DeviceProtection": device_protection,
+        "TechSupport": tech_support,
+        "StreamingTV": streaming_tv,
+        "StreamingMovies": streaming_movies,
+        "Contract": contract,
+        "PaperlessBilling": paperless_billing,
+        "PaymentMethod": payment_method,
+        "MonthlyCharges": monthly_charges,
+        "TotalCharges": total_charges
+    }])
+
+    # Load reference data to ensure consistent encoding
+    reference_data = pd.read_csv("data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+    
+    # Create label encoder for each categorical column
+    label_encoders = {}
+    for column in input_data.columns:
+        if input_data[column].dtype == "object":
+            le = LabelEncoder()
+            # Fit the encoder on the reference data
+            if column in reference_data.columns:
+                le.fit(reference_data[column].astype(str))
+            # Transform the input data
+            try:
+                input_data[column] = le.transform(input_data[column].astype(str))
+            except ValueError as e:
+                st.error(f"Invalid value in {column}. Please check your input.")
+                st.write("Valid values:", ', '.join(le.classes_))
+                prediction = None
+                probability = None
+                break
+
+    # Predict
+    prediction = model.predict(input_data)[0]
+    probability = model.predict_proba(input_data)[0][1]
+
+    # Show results
+    st.subheader("Prediction Result")
     if prediction == 1:
-        st.error("⚠️ This customer is likely to churn.")
+        st.error(f"❌ Customer is likely to churn. (Probability: {probability:.2%})")
     else:
-        st.success("✅ This customer is likely to stay.")
+        st.success(f"✅ Customer is likely to stay. (Probability: {probability:.2%})")

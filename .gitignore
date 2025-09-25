@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+venv/
+ENV/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Model files (if they're too large)
+# *.joblib  # Uncomment if model file is too large
+
+# Data files (if they contain sensitive information)
+# data/*.csv  # Uncomment if data shouldn't be shared
